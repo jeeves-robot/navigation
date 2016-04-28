@@ -5,6 +5,7 @@
 
 ## Start rviz
 `roslaunch rviz rviz`
+
 1. Add pointcloud2
     1. Change topic: /camera/depth/points
 1. Add Marker 
