@@ -1,17 +1,18 @@
+#!/usr/bin/env python
+
 import rospy
 import tf
 import turtlesim.srv
-
+import time
 import math
 
-from geometry_msgs import PoseWithCovariance, PoseWithCovarianceStamped
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3, Twist
 from std_msgs.msg import Header, ColorRGBA
 
 #odom_topic = 'robot_pose_ekf/odom_combined'
 
-base_position = 'odom_combined'
+base_position = 'odom'
 displaced_position = 'base_link'
 
 class Tracker:
@@ -41,22 +42,25 @@ class Tracker:
     def distance(self, p1, p2):
         return ((p1.x - p2.x)**2 + (p1.y - p2.y)**2 + (p1.z - p2.z)**2) ** 0.5
 
-    def odom_callback(self, pose):
-        position = pose.position
-
-        if(self.distance(position, self._last_position) > 1):
-            self._last_position = position
+    def odom_callback(self, pos):
+        pointPosition = Point(pos[0], pos[1], pos[2])
+        if(self.distance(pointPosition, self._last_position) > 0.1):
+            print self.distance(pointPosition, self._last_position)
+            #self._last_position = pointPosition
             self.show_text_in_rviz("marker")
 
     def run(self):
-        self._listener.waitForTransform(base_position, displaced_position, rospy.Time(), rospy.Duration(4.0))
+        self._listener.waitForTransform(base_position, displaced_position, rospy.Time(), rospy.Duration(20.0))
         while not rospy.is_shutdown():
             try:
                 now = rospy.Time.now()
                 # This is made up of a position and a quarternion
-                self._listener.waitForTransform(base_position, displaced_position, now, rospy.Duration(4.0))
-                transform = self._listener.lookupTransform(base_position, displaced_position, rospy.Time(0))
-                self.odom_callback(transform)
+                self._listener.waitForTransform(base_position, displaced_position, now, rospy.Duration(20.0))
+                (pos, quat) = self._listener.lookupTransform(base_position, displaced_position, rospy.Time(0))
+                self.odom_callback(pos)
+                self._last_position = Point(pos[0], pos[1], pos[2])
+                time.sleep(1)
+
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue
 
