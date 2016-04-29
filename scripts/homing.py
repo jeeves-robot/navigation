@@ -40,13 +40,14 @@ class Homer:
                         pose.orientation.z,
                         pose.orientation.w)
                 euler_angle = euler_from_quaternion(quaternion)
+                z_angle = euler_angle[2]
 
                 # If we are not at the right angle, adjust angle
-                if(abs(euler_angle[2]) > 0.05):
+                if(abs(z_angle) > 0.05):
                     # Set the angular velocity so that it will reach this angle in .2 seconds
-                    twist.angular.z = euler_angle[2] * -1
+                    twist.angular.z = z_angle * -5
                     # Set a maximum, so we don't turn too fast
-                    twist.angular.z = max(min(twist.angular.z, 3), -3)
+                    twist.angular.z = max(min(twist.angular.z, abs(z_angle)), -abs(z_angle))
 
                     print "Turning ", twist.angular.z
                     print "Angle is ", euler_angle[2] 
@@ -58,7 +59,9 @@ class Homer:
                 else:
                     # Assumes x is always positive if angle is this small
                     # Can we assume that
-                    twist.linear.x = max(min(1, position.x * 5), -1)
+                    print "Displacement is ", position.x
+                    twist.linear.x = max(min(1, position.x * -5), -1)
+                    print "Moving ", twist.linear.x
                     self._twist_publisher.publish(twist)
                     time.sleep(.2)
                     self._twist_publisher.publish(Twist())

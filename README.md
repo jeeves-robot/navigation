@@ -13,6 +13,9 @@
 1. Add TF (sometimes)
 1. Fixed Frame: base_footprint or base_link
 
+
 ## Joystick 
 `roslaunch kobuki_keyop keyop.launch`
 
+## Start odom tracker
+`rosrun robot_pose_ekf robot_pose_ekf
