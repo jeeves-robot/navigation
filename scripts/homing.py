@@ -30,7 +30,7 @@ class Homer:
         if(self._active):
             pose = stampedPose.pose.pose
             position = pose.position
-            if(self.distance(position, Point(0,0,0)) > .1):
+            if(self.distance(position, Point(0,0,0)) > 0.05):
                 # Publish Twist that will get us closer to position
                 twist = Twist()
 
@@ -43,28 +43,20 @@ class Homer:
                 z_angle = euler_angle[2]
 
                 # If we are not at the right angle, adjust angle
-                if(abs(z_angle) > 0.05):
+                if(abs(z_angle) > 0.1):
                     # Set the angular velocity so that it will reach this angle in .2 seconds
-                    twist.angular.z = z_angle * -5
+                    twist.angular.z = z_angle * -1
                     # Set a maximum, so we don't turn too fast
-                    twist.angular.z = max(min(twist.angular.z, abs(z_angle)), -abs(z_angle))
+                    twist.angular.z = max(min(twist.angular.z, 1.5), -1.5)
 
-                    print "Turning ", twist.angular.z
-                    print "Angle is ", euler_angle[2] 
                     # Move in that direction for .2 seconds, then stop moving
                     self._twist_publisher.publish(twist)
-                    time.sleep(.2)
-                    self._twist_publisher.publish(Twist())
                 # Otherwise, move towards where we want to go for .2 seconds, then stop
                 else:
                     # Assumes x is always positive if angle is this small
                     # Can we assume that
-                    print "Displacement is ", position.x
-                    twist.linear.x = max(min(1, position.x * -5), -1)
-                    print "Moving ", twist.linear.x
+                    twist.linear.x = max(min(0.2, position.x * -1), -0.2)
                     self._twist_publisher.publish(twist)
-                    time.sleep(.2)
-                    self._twist_publisher.publish(Twist())
 
     def activate(self):
         self._active = True

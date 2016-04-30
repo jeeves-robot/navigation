@@ -15,6 +15,8 @@ topic = '/cmd_vel_mux/input/navi'
 bumped = False
 pub = rospy.Publisher(topic, Twist, queue_size=5)
 
+sleep_time = 1
+
 # This method is called when we hit something.
 # Randomly choose a direction
 def changeDirection(bump):
@@ -31,13 +33,13 @@ def rotate():
         twist.linear.x = -0.05
         twist.angular.x = 0
         pub.publish(twist)
-        time.sleep(.02)
+        time.sleep(sleep_time)
     angle = random.uniform(-2, 2)
     for i in range(50):
         twist.linear.x = -0.05
         twist.angular.z = 2
         pub.publish(twist)
-        time.sleep(.02)
+        time.sleep(sleep_time)
     pub.publish(twist)
     bumped = False
 
@@ -50,7 +52,7 @@ def move_forward():
     twist.angular.y = 0
     twist.angular.z = 0
     pub.publish(twist)
-    time.sleep(0.2)
+    time.sleep(sleep_time)
 
 # Rotate back and forth to show that it is stuck.
 # Steps to stuck dance:
@@ -70,7 +72,7 @@ def stuck_dance():
     # Assumes that after this command will sleep for .5 seconds
     # Will turn (about) 90 degrees
     twistRight = Twist()
-    twistRight.angular.z = 3.14
+    twistRight.angular.z = 1.57
 
     twistLeft = Twist()
     twistLeft.angular.z = -1 * twistRight.angular.z
@@ -83,14 +85,14 @@ def stuck_dance():
         twistBackward.linear.x = -0.05
 
         pub.publish(twistForward)
-        time.sleep(0.2)
+        time.sleep(sleep_time)
 
         pub.publish(twistBackward)
-        time.sleep(0.2)
+        time.sleep(sleep_time)
 
     def twist_direction(direction):
         pub.publish(direction)
-        time.sleep(0.5)
+        time.sleep(sleep_time)
 
     forward_back()
     twist_direction(twistRight)
@@ -111,9 +113,6 @@ if __name__ == "__main__":
 
     try: 
         while(1):
-            if bumped is True:
-                rotate()
-            else:
-                move_forward()
+            stuck_dance()
     except:
         print "error!"
