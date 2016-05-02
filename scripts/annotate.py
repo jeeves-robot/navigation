@@ -7,10 +7,12 @@ import time
 import math
 import sys
 import csv
+import actionlib
 
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Quaternion, Pose, Point, Vector3, Twist
 from std_msgs.msg import Header, ColorRGBA
+from move_base_msgs.msg import *
 
 base_position = 'map'
 displaced_position = 'base_link'
@@ -21,6 +23,7 @@ class Annotator:
 		self._markers = {}
 		self._filename = filename
 		self._num_markers = 0
+                self._goal_id=0
 
                 # Load in any previously saved markers
                 with open(self._filename, 'r') as csvfile:
@@ -35,6 +38,9 @@ class Annotator:
 		self._listener = tf.TransformListener()
 		self._rate = rospy.Rate(10.0)
 		self._marker_publisher = rospy.Publisher('visualization_marker', Marker)
+                # Set up action client to send goals to
+                self._action_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+                self._action_client.wait_for_server()
 
 	def place_marker(self, name):
                 now = rospy.Time.now()
@@ -75,12 +81,31 @@ class Annotator:
 			writer.writerow(marker)
 
 	def go_to_marker(self, name):
+                self._goal_id += 1
                 marker = self._markers[name]
                 point_position = Point(marker['posX'], marker['posY'], marker['posZ'])
                 quaternion = Quaternion(marker['quat0'], marker['quat1'], marker['quat2'], marker['quat3'])
 		print(point_position)
 		print(quaternion)
 
+                # TODO: Set up goal
+                specificGoal = MoveBaseGoal()
+                specificGoal.target_pose.header.frame_id = 'map'
+                #specificGoal.target_pose.header.stamp = rospy.Time.now()
+
+                pose = Pose(point_position, quaternion)
+                specificGoal.target_pose.pose = pose
+
+                self._action_client.send_goal(specificGoal)
+                finished_on_time = self._action_client.wait_for_result(Duration.from_sec(30))
+                if not finished_on_time:
+                    self._action_client.cancel_goal()
+                    print "Timed out acheiving goal"
+                else:
+                    if self._action_client.get_state() == GoalStatus.SUCCEEDED:
+                        print "Success!"
+                    else:
+                        print "Failure"
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
