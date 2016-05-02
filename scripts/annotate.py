@@ -14,12 +14,23 @@ from std_msgs.msg import Header, ColorRGBA
 
 base_position = 'map'
 displaced_position = 'base_link'
+fieldnames=['name', 'posX', 'posY', 'posZ', 'quat0', 'quat1', 'quat2', 'quat3', 'markerNum']
 
 class Annotator:
 	def __init__(self, filename):
+		self._markers = {}
 		self._filename = filename
 		self._num_markers = 0
-		rospy.init_node('turtlebot_annotater')
+
+                # Load in any previously saved markers
+                with open(self._filename, 'r') as csvfile:
+                    reader = csv.DictReader(csvfile,
+                            fieldnames=fieldnames, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                    for row in reader:
+                        self._markers[row['name']]=row
+
+                # Set up node for annotater
+                rospy.init_node('turtlebot_annotater')
 		# Create a TF listener
 		self._listener = tf.TransformListener()
 		self._rate = rospy.Rate(10.0)
@@ -42,27 +53,47 @@ class Annotator:
 			    header=Header(frame_id=base_position),
 			    color=ColorRGBA(0.0, 1.0, 0.0, 0.8), text=name)
 		self._marker_publisher.publish(marker)
-		self.write_data(name, pointPosition, quaternion, self._num_markers)
 
-	def write_data(self, name, point_position, quaternion, marker_id):
+                newMarker = {}
+                newMarker['name'] = name
+                newMarker['posX'] = pos[0]
+                newMarker['posY'] = pos[1]
+                newMarker['posZ'] = pos[2]
+                newMarker['quat0'] = quat[0]
+                newMarker['quat1'] = quat[1]
+                newMarker['quat2'] = quat[2]
+                newMarker['quat3'] = quat[3]
+                newMarker['markerNum'] = self._num_markers
+                self._markers[name] = newMarker
+                self.write_data(newMarker)
+
+	def write_data(self, marker):
 		with open(self._filename, 'a') as csvfile:
-			writer = csv.writer(csvfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-			writer.writerow([name, point_position, quaternion, marker_id])
+			writer = csv.DictWriter(csvfile,
+                                fieldnames=marker.keys(),
+                                delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+			writer.writerow(marker)
 
 	def go_to_marker(self, name):
-		# TODO
-		pass
+                marker = self._markers[name]
+                point_position = Point(marker['posX'], marker['posY'], marker['posZ'])
+                quaternion = Quaternion(marker['quat0'], marker['quat1'], marker['quat2'], marker['quat3'])
+		print(point_position)
+		print(quaternion)
 
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print "Pass file location as argument to command line."
+        print "Defaulting to markers.cv"
+        filename = 'markers.cv'
+    else:
 	filename = sys.argv[1]
-	annotate = Annotator(filename)
-	while(1):
-		terms = raw_input('Save or go to marker? (s to save, g to go to marker): ')
-		args = terms.split(" ")
-		if args[0] == 's':
-			annotate.place_marker(args[1])
-		else:
-			annotate.go_to_marker(args[1])
-			
-		
+    annotate = Annotator(filename)
+    while(1):
+            terms = raw_input('Save or go to marker? (s name) save, (g name) go to marker: ')
+            args = terms.split(" ")
+            if args[0] == 's':
+                    annotate.place_marker(args[1])
+            elif args[0] == 'g':
+                    annotate.go_to_marker(args[1])
