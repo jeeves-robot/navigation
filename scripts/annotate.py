@@ -35,15 +35,15 @@ class Annotator:
 		self._marker_publisher.publish(marker)
                 self._num_markers += 1
                 marker_text = Marker(type=Marker.TEXT_VIEW_FACING, id=self._num_markers,
-                        lifetime = rospy.Duration(), pose=pose, scale=Vector3(0.06, 0.06, 0.06),
+                        lifetime = rospy.Duration(), pose=pose, scale=Vector3(0.6, 0.6, 0.6),
                         header=Header(frame_id=base_position),
-                        color=ColorRGBA(0.0, 1.0, 0.0, 0.8), text=name)
+                        color=ColorRGBA(1.0, 0.0, 0.0, 0.8), text=name)
                 self._marker_publisher.publish(marker)
 
         def draw_region(self, pose, name, radius):
                 print "Drawing region"
                 print(pose)
-                self._num_markers+= 1
+                self._num_markers += 1
                 marker = Marker(type=Marker.CYLINDER, id=self._num_markers,
                         lifetime=rospy.Duration(), pose=pose,
                         scale=Vector3(radius, radius, 0.06),
@@ -52,9 +52,9 @@ class Annotator:
                 self._marker_publisher.publish(marker)
                 self._num_markers += 1
                 marker_text = Marker(type=Marker.TEXT_VIEW_FACING, id=self._num_markers,
-                        lifetime = rospy.Duration(), pose=pose, scale=Vector3(0.06, 0.06, 0.06),
+                        lifetime = rospy.Duration(), pose=pose, scale=Vector3(0.6, 0.6, 0.6),
                         header=Header(frame_id=base_position),
-                        color=ColorRGBA(0.0, 1.0, 0.0, 0.8), text=name)
+                        color=ColorRGBA(1.0, 0.0, 0.0, 0.8), text=name)
                 self._marker_publisher.publish(marker)
 
 	def place_marker(self, name, regionType, regionSize):
@@ -102,7 +102,7 @@ class Annotator:
 		print(point_position)
 		print(quaternion)
 
-                # TODO: Set up goal
+                # Set up goal
                 specificGoal = MoveBaseGoal()
                 specificGoal.target_pose.header.frame_id = 'map'
                 specificGoal.target_pose.header.stamp = rospy.Time.now()
@@ -132,7 +132,10 @@ class Annotator:
 		# Create a TF listener
 		self._listener = tf.TransformListener()
 		self._rate = rospy.Rate(10.0)
-		self._marker_publisher = rospy.Publisher('visualization_marker', Marker)
+		self._marker_publisher = rospy.Publisher('visualization_marker', Marker, queue_size=2)
+
+                # Wait until subscribers notice new publisher
+                rospy.sleep(1)
 
                 print "opening file"
                 # Load in any previously saved markers
@@ -178,7 +181,10 @@ if __name__ == '__main__':
             terms = raw_input('Save or go to marker? (s name) save pose, ' +
                     '(r name) save region, (g name) go to marker, (l) list: ')
             args = terms.split(" ")
-            if args[0] == 's':
+            if len(args) < 1 or (
+                    len(args) < 2 and (args[0] == 's' or args[0] == 'g' or args[0] == 'r')):
+                    print "I need a name to do that"
+            elif args[0] == 's':
                     annotate.place_marker(args[1], POSE, 0)
             elif args[0] == 'r':
                     radius = float(raw_input('Enter radius of region as a float: '))
