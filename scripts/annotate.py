@@ -31,7 +31,7 @@ class Annotator:
 			    header=Header(frame_id=base_position),
 			    color=ColorRGBA(0.0, 1.0, 0.0, 0.8), text=name)
 		self._marker_publisher.publish(marker)
-                self._num_markers + 1
+                self._num_markers += 1
                 marker_text = Marker(type=Marker.TEXT_VIEW_FACING, id=self._num_markers,
                         lifetime = rospy.Duration(), pose=pose, scale=Vector3(0.06, 0.06, 0.06),
                         header=Header(frame_id=base_position),
@@ -46,8 +46,8 @@ class Annotator:
                         header=Header(frame_id=base_position),
                         color=ColorRGBA(0.0, 1.0, 0.0, 0.8), text=name)
                 self._marker_publisher.publish(marker)
-                self._num_markers + 1
-                marker_text = Marker(type=Marker.TEXT_VIEW_FACING, id=self.num_markers,
+                self._num_markers += 1
+                marker_text = Marker(type=Marker.TEXT_VIEW_FACING, id=self._num_markers,
                         lifetime = rospy.Duration(), pose=pose, scale=Vector3(0.06, 0.06, 0.06),
                         header=Header(frame_id=base_position),
                         color=ColorRGBA(0.0, 1.0, 0.0, 0.8), text=name)
@@ -130,6 +130,7 @@ class Annotator:
 		self._rate = rospy.Rate(10.0)
 		self._marker_publisher = rospy.Publisher('visualization_marker', Marker)
 
+                print "opening file"
                 # Load in any previously saved markers
                 with open(self._filename, 'r') as csvfile:
                     reader = csv.DictReader(csvfile,
@@ -149,11 +150,16 @@ class Annotator:
                         self._markers[row['name']]=my_row
                         pose = Pose(Point(row['posX'], row['posY'], row['posZ']),
                                 Quaternion(row['quat0'], row['quat1'], row['quat2'], row['quat3']))
-#                        self.draw_marker(pose, row['name'])
+                        if my_row['type'] == CIRCLE:
+                            self.draw_region(pose, row['name'], row['radius'])
+                        else:
+                            self.draw_marker(pose, row['name'])
+                print "file read"
                 print self._markers
 
                 # Set up action client to send goals to
                 self._action_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+                # Note, if acml_demo.launch is not running, this will take forever
                 self._action_client.wait_for_server()
 
 if __name__ == '__main__':
@@ -171,7 +177,7 @@ if __name__ == '__main__':
             if args[0] == 's':
                     annotate.place_marker(args[1], POSE, 0)
             elif args[0] == 'r':
-                    radius = float(raw_input('Enter radius of region as a float'))
+                    radius = float(raw_input('Enter radius of region as a float: '))
                     annotate.place_marker(args[1], CIRCLE, radius)
             elif args[0] == 'g':
                     annotate.go_to_marker(args[1])
