@@ -58,7 +58,7 @@ if __name__ == '__main__':
 	filename = sys.argv[1]
 	annotate = Annotator(filename)
 	while(1):
-		terms = raw_input('Save or go to marker? s to save, g to go to marker')
+		terms = raw_input('Save or go to marker? (s to save, g to go to marker): ')
 		args = terms.split(" ")
 		if args[0] == 's':
 			annotate.place_marker(args[1])
