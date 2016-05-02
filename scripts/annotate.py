@@ -23,6 +23,8 @@ POSE = 'pose'
 
 class Annotator:
         def draw_marker(self, pose, name):
+                print "Drawing marker"
+                print(pose)
                 self._num_markers += 1
                 marker = Marker(type=Marker.SPHERE, id=self._num_markers,
 			    lifetime=rospy.Duration(),
@@ -39,6 +41,8 @@ class Annotator:
                 self._marker_publisher.publish(marker)
 
         def draw_region(self, pose, name, radius):
+                print "Drawing region"
+                print(pose)
                 self._num_markers+= 1
                 marker = Marker(type=Marker.CYLINDER, id=self._num_markers,
                         lifetime=rospy.Duration(), pose=pose,
@@ -132,7 +136,7 @@ class Annotator:
 
                 print "opening file"
                 # Load in any previously saved markers
-                with open(self._filename, 'r') as csvfile:
+                with open(self._filename, 'ab+') as csvfile:
                     reader = csv.DictReader(csvfile,
                             fieldnames=fieldnames, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     for row in reader:
@@ -148,12 +152,12 @@ class Annotator:
                         my_row['radius'] = float(row['radius'])
                         my_row['type'] = row['type']
                         self._markers[row['name']]=my_row
-                        pose = Pose(Point(row['posX'], row['posY'], row['posZ']),
-                                Quaternion(row['quat0'], row['quat1'], row['quat2'], row['quat3']))
+                        pose = Pose(Point(my_row['posX'], my_row['posY'], my_row['posZ']),
+                                Quaternion(my_row['quat0'], my_row['quat1'], my_row['quat2'], my_row['quat3']))
                         if my_row['type'] == CIRCLE:
-                            self.draw_region(pose, row['name'], row['radius'])
+                            self.draw_region(pose, my_row['name'], my_row['radius'])
                         else:
-                            self.draw_marker(pose, row['name'])
+                            self.draw_marker(pose, my_row['name'])
                 print "file read"
                 print self._markers
 
