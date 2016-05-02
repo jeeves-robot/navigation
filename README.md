@@ -19,3 +19,6 @@
 
 ## Start odom tracker
 `rosrun robot_pose_ekf robot_pose_ekf
+
+### Example code for sending goals to robot
+http://ros-by-example.googlecode.com/svn/trunk/rbx_vol_1/rbx1_nav/nodes/move_base_square.py
