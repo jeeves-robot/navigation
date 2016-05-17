@@ -6,7 +6,7 @@ from move_util import *
 # That means it will keep going in a straight line until it
 # hits an obstacle, then adjust and move.
 def roomba():
-    pass #TODO
+    pass
 
 ### This method provides an emotive dance to show it is stuck
 # The steps of the dance are:
